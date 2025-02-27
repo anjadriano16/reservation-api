@@ -53,9 +53,7 @@ class PayloadParserServiceTest < ActiveSupport::TestCase
   end
   
   test "should parse payload type 1 correctly" do
-    puts "Parsing payload type 1..."
     parsed_data = PayloadParserService.new(@payload_type_1).parse
-    puts "Parsed data: #{parsed_data.inspect}"
 
     # Check reservation data
     assert_equal "2021-03-12", parsed_data[:reservation_data][:start_date]
@@ -72,9 +70,7 @@ class PayloadParserServiceTest < ActiveSupport::TestCase
   end
   
   test "should parse payload type 2 correctly" do
-    puts "Parsing payload type 2..."
     parsed_data = PayloadParserService.new(@payload_type_2).parse
-    puts "Parsed data: #{parsed_data.inspect}"
     
     # Check reservation data
     assert_equal "2021-03-12", parsed_data[:reservation_data][:start_date]

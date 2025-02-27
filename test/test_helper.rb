@@ -10,13 +10,7 @@ class ActiveSupport::TestCase
   # fixtures :all
 
   # Set up transactional tests
-  self.use_transactional_tests = true
+  # self.use_transactional_tests = true
 
   # Add more helper methods to be used by all tests here...
-  # Ensure each test starts with a clean state for certain tables
-  setup do
-    # This will run before each test in all test classes
-    Guest.delete_all
-    Reservation.delete_all
-  end
 end

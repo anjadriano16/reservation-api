@@ -11,21 +11,7 @@ class ReservationCreationService
   
   def create_or_update
     validate_data!
-
-    ActiveRecord::Base.transaction do
-      # Find or initialize guest by email
-      guest = Guest.find_or_initialize_by(email: @guest_data[:email])
-      guest.assign_attributes(@guest_data)
-      guest.save! # Ensure guest is persisted before creating reservation
-      
-      # Ensure the reservation data has the correct guest_id
-      reservation_data = @reservation_data.dup
-      reservation_data[:guest_id] = guest.id # Explicitly set guest_id
-      reservation_data.delete(:guest_id_from_payload) # Remove any potential conflicts
-      
-      # Create the reservation
-      guest.reservations.create!(reservation_data)
-    end
+    ActiveRecord::Base.transaction { process_reservation }
   rescue ActiveRecord::RecordInvalid => e
     raise ReservationError, "Failed to save: #{e.message}"
   end
@@ -33,11 +19,25 @@ class ReservationCreationService
   private
 
   def validate_data!
-    missing_reservation_fields = REQUIRED_RESERVATION_FIELDS.select { |field| @reservation_data[field].blank? }
-    missing_guest_fields = REQUIRED_GUEST_FIELDS.select { |field| @guest_data[field].blank? }
+    missing_fields = missing_required_fields
+    raise ReservationError, "Missing required fields: #{missing_fields.join(', ')}" unless missing_fields.empty?
+  end
 
-    unless missing_reservation_fields.empty? && missing_guest_fields.empty?
-      raise ReservationError, "Missing required fields: #{(missing_reservation_fields + missing_guest_fields).join(', ')}"
-    end
+  def missing_required_fields
+    REQUIRED_RESERVATION_FIELDS.select { |field| @reservation_data[field].blank? } +
+      REQUIRED_GUEST_FIELDS.select { |field| @guest_data[field].blank? }
+  end
+
+  def process_reservation
+    guest = find_or_create_guest
+    reservation_data = @reservation_data.merge(guest_id: guest.id).except(:guest_id_from_payload)
+    guest.reservations.create!(reservation_data)
+  end
+
+  def find_or_create_guest
+    guest = Guest.find_or_initialize_by(email: @guest_data[:email])
+    guest.assign_attributes(@guest_data)
+    guest.save!
+    guest
   end
 end
